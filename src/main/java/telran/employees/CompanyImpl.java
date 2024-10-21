@@ -1,58 +1,56 @@
 package telran.employees;
 
+import java.io.*;
+import java.nio.file.*;
 import java.util.*;
 
-public class CompanyImpl implements Company {
-    private final TreeMap<Long, Employee> employees = new TreeMap<>();
-    private final HashMap<String, List<Employee>> employeesByDepartment = new HashMap<>();
-    private final TreeMap<Float, List<Manager>> managersByFactor = new TreeMap<>();
+import telran.io.Persistable;
 
-    private class EmployeeIterator implements Iterator<Employee> {
-        private final Iterator<Employee> iterator = employees.values().iterator();
-        private Employee currentEmployee;
-
-        @Override
-        public boolean hasNext() {
-            return iterator.hasNext();
-        }
-
-        @Override
-        public Employee next() {
-            if (!hasNext()) {
-                throw new NoSuchElementException();
-            }
-            currentEmployee = iterator.next();
-            return currentEmployee;
-        }
-
-        @Override
-        public void remove() {
-            if (currentEmployee == null) {
-                throw new IllegalStateException();
-            }
-            iterator.remove();
-            removeFromDepartment(currentEmployee);
-            currentEmployee = null;
-        }
+public class CompanyImpl implements Company, Persistable{
+   private TreeMap<Long, Employee> employees = new TreeMap<>();
+   private HashMap<String, List<Employee>> employeesDepartment = new HashMap<>();
+   private TreeMap<Float, List<Manager>> managersFactor = new TreeMap<>();
+private class CompanyIterator implements Iterator<Employee> {
+    Iterator<Employee> iterator = employees.values().iterator();
+    Employee lastIterated;
+    @Override
+    public boolean hasNext() {
+       return iterator.hasNext();
     }
 
+    @Override
+    public Employee next() {
+       lastIterated = iterator.next();
+       return lastIterated;
+    }
+    @Override
+    public void remove() {
+       iterator.remove();
+       removeFromIndexMaps(lastIterated);
+    }
+}
     @Override
     public Iterator<Employee> iterator() {
-        return new EmployeeIterator();
+       return new CompanyIterator();
     }
 
     @Override
-    public void addEmployee(Employee employee) {
-        if (employees.containsKey(employee.getId())) {
-            throw new IllegalStateException();
+    public void addEmployee(Employee empl) {
+        long id = empl.getId();
+        if (employees.putIfAbsent(id, empl) != null) {
+            throw new IllegalStateException("Already exists employee " + id);
         }
-        employees.put(employee.getId(), employee);
-        employeesByDepartment.computeIfAbsent(employee.getDepartment(), k -> new ArrayList<>()).add(employee);
-
-        if (employee instanceof Manager manager) {
-            managersByFactor.computeIfAbsent(manager.getFactor(), k -> new LinkedList<>()).add(manager);
-        }
+        addIndexMaps(empl);
     }
+
+    private void addIndexMaps(Employee empl) {
+       employeesDepartment.computeIfAbsent(empl.getDepartment(), k -> new ArrayList<>()).add(empl);
+       if (empl instanceof Manager manager) {
+            managersFactor.computeIfAbsent(manager.getFactor(), k -> new ArrayList<>()).add(manager);
+       }
+    }
+
+    
 
     @Override
     public Employee getEmployee(long id) {
@@ -61,55 +59,67 @@ public class CompanyImpl implements Company {
 
     @Override
     public Employee removeEmployee(long id) {
-        Employee removedEmployee = employees.remove(id);
-        if (removedEmployee == null) {
-            throw new NoSuchElementException();
+        Employee empl = employees.remove(id);
+        if(empl == null) {
+            throw new NoSuchElementException("Not found employee " + id);
         }
-        removeFromDepartment(removedEmployee);
-        return removedEmployee;
+        removeFromIndexMaps(empl);
+        return empl;
     }
 
-    private void removeFromDepartment(Employee employee) {
-        List<Employee> departmentEmployees = employeesByDepartment.get(employee.getDepartment());
-        if (departmentEmployees != null) {
-            departmentEmployees.remove(employee);
-            if (departmentEmployees.isEmpty()) {
-                employeesByDepartment.remove(employee.getDepartment());
-            }
-        }
-        if (employee instanceof Manager manager) {
-            removeManager(manager);
+
+    private void removeFromIndexMaps(Employee empl) {
+        removeIndexMap(empl.getDepartment(), employeesDepartment, empl);
+        if (empl instanceof Manager manager) {
+            removeIndexMap(manager.getFactor(), managersFactor, manager);
         }
     }
 
-    private void removeManager(Manager manager) {
-        List<Manager> managers = managersByFactor.get(manager.getFactor());
-        if (managers != null) {
-            managers.remove(manager);
-            if (managers.isEmpty()) {
-                managersByFactor.remove(manager.getFactor());
-            }
+    private <K, V extends Employee> void removeIndexMap(K key, Map<K, List<V>> map, V empl) {
+        List<V> list = map.get(key);
+        list.remove(empl);
+        if (list.isEmpty()) {
+            map.remove(key);
         }
     }
 
     @Override
     public int getDepartmentBudget(String department) {
-        return employeesByDepartment.getOrDefault(department, Collections.emptyList())
-            .stream()
-            .mapToInt(Employee::computeSalary)
-            .sum();
+        return employeesDepartment.getOrDefault(department, Collections.emptyList())
+        .stream().mapToInt(Employee::computeSalary).sum();
     }
 
     @Override
     public String[] getDepartments() {
-        return employeesByDepartment.keySet().stream()
-            .sorted()
-            .toArray(String[]::new);
+        return employeesDepartment.keySet().stream().sorted().toArray(String[]::new);
     }
 
     @Override
     public Manager[] getManagersWithMostFactor() {
-        Map.Entry<Float, List<Manager>> entry = managersByFactor.lastEntry();
-        return entry != null ? entry.getValue().toArray(new Manager[0]) : new Manager[0];
+        Manager [] res = new Manager[0];
+        if (!managersFactor.isEmpty()) {
+            res = managersFactor.lastEntry().getValue().toArray(res);
+        }
+        return res;
     }
+
+    @Override
+    public void saveToFile(String fileName) {
+        try (PrintWriter writer = new PrintWriter(fileName)) {
+            forEach(writer::println);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void restoreFromFile(String fileName) {
+        try (BufferedReader reader = Files.newBufferedReader(Path.of(fileName))) {
+            reader.lines().map(Employee::getEmployeeFromJSON).forEach(this::addEmployee);
+        } catch (FileNotFoundException e) { 
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }
