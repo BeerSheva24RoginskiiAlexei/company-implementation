@@ -172,10 +172,12 @@ public class CompanyImpl implements Company, Persistable {
 
     @Override
     public void restoreFromFile(String fileName) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
-            reader.lines().forEach(i -> addEmployee(Employee.getEmployee(i)));
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(fileName));
+            reader.lines().forEach(line -> addEmployee(Employee.getEmployeeFromJSON(line)));
+            reader.close();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException();
         }
     }
 }

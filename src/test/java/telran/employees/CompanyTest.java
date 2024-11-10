@@ -156,11 +156,9 @@ class CompanyTest {
 	}
 
 	@Test
-	@Disabled
-	void jsonCreateTest() {
-		Employee empl1 = Employee.getEmployee(
-				"{\"className\":\"telran.employees.Manager\",\"id\":123,\"salary\":1000,\"department\":\"QA\",\"factor\":2}");
-		assertEquals(empl1, new Manager(ID1, SALARY1, DEPARTMENT1, FACTOR1));
+	void fromJSONToObjectTest() {
+		Employee empl = Employee.getEmployeeFromJSON("{\"basicSalary\":1000,\"className\":\"telran.employees.Manager\",\"id\":123,\"department\":\"QA\",\"factor\":2}");
+		assertEquals(empl, new Manager(ID1, SALARY1, DEPARTMENT1, FACTOR1));
 	}
 
 	@Test

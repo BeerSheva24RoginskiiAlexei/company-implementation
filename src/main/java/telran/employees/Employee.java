@@ -7,19 +7,18 @@ public class Employee {
     private int salary;
     private String department;
 
-    static public Employee getEmployee(String jsonStr) {
+    @SuppressWarnings("unchecked")
+    static public Employee getEmployeeFromJSON(String jsonStr) {
         JSONObject json = new JSONObject(jsonStr);
         String className = json.getString("className");
-
         try {
             Class<Employee> clazz = (Class<Employee>) Class.forName(className);
-            Employee employee = clazz.getConstructor(null).newInstance();
-            employee.setObject(json);
-            return employee;
+            Employee empl = clazz.getConstructor().newInstance();
+            empl.setObject(json);
+            return empl;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
     }
 
     public Employee() {
