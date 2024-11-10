@@ -157,7 +157,7 @@ class CompanyTest {
 
 	@Test
 	void fromJSONToObjectTest() {
-		Employee empl = Employee.getEmployeeFromJSON("{\"basicSalary\":1000,\"className\":\"telran.employees.Manager\",\"id\":123,\"department\":\"QA\",\"factor\":2}");
+		Employee empl = Employee.getEmployeeFromJSON("{\"salary\":1000,\"basicSalary\":1000,\"className\":\"telran.employees.Manager\",\"id\":123,\"department\":\"QA\",\"factor\":2}");
 		assertEquals(empl, new Manager(ID1, SALARY1, DEPARTMENT1, FACTOR1));
 	}
 
