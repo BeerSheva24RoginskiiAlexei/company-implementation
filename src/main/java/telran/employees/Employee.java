@@ -4,74 +4,65 @@ import org.json.JSONObject;
 
 public class Employee {
     private long id;
-    private int salary;
+    private int basicSalary;
     private String department;
+    public Employee(){
 
+    }
     @SuppressWarnings("unchecked")
     static public Employee getEmployeeFromJSON(String jsonStr) {
-        JSONObject json = new JSONObject(jsonStr);
-        String className = json.getString("className");
+        JSONObject jsonObj = new JSONObject(jsonStr);
+        String className = jsonObj.getString("className");
         try {
             Class<Employee> clazz = (Class<Employee>) Class.forName(className);
-            Employee empl = clazz.getConstructor().newInstance();
-            empl.setObject(json);
+            Employee empl =  clazz.getConstructor().newInstance();
+            empl.setObject(jsonObj);
             return empl;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+           throw new RuntimeException(e);
         }
     }
-
-    public Employee() {
+    
+    public int getBasicSalary() {
+        return basicSalary;
     }
-
-    public Employee(long id, int salary, String department) {
+   protected void setObject(JSONObject jsonObj) {
+       id = jsonObj.getLong("id");
+       basicSalary = jsonObj.getInt("basicSalary");
+       department = jsonObj.getString("department");
+    }
+    public Employee(long id, int basicSalary, String department) {
         this.id = id;
-        this.salary = salary;
+        this.basicSalary = basicSalary;
         this.department = department;
     }
-
+    public int computeSalary() {
+        return basicSalary;
+    }
     public long getId() {
         return id;
     }
-
-    public int getSalary() {
-        return salary;
-    }
-
     public String getDepartment() {
         return department;
     }
-
-    public int computeSalary() {
-        return salary;
-    }
-
     @Override
     public boolean equals(Object obj) {
-        boolean res = false;
-        if (obj instanceof Employee empl) {
-            res = id == empl.getId();
-        }
-        return res;
+       boolean res = false;
+       if (obj instanceof Employee empl) {
+            res = id == empl.id;
+       }
+       return res;
     }
-
     @Override
     public String toString() {
-        JSONObject json = new JSONObject();
-        json.put("className", getClass().getName());
-        fillJSON(json);
-        return json.toString();
+        JSONObject jsonObj = new JSONObject();
+        jsonObj.put("className", getClass().getName());
+        fillJSON(jsonObj);
+        return jsonObj.toString();
     }
-
-    protected void fillJSON(JSONObject json) {
-        json.put("id", id);
-        json.put("salary", salary);
-        json.put("department", department);
-    }
-
-    protected void setObject(JSONObject json) {
-        id = json.getLong("id");
-        salary = json.getInt("salary");
-        department = json.getString("department");
+   protected void fillJSON(JSONObject jsonObj) {
+        jsonObj.put("id",id);
+        jsonObj.put("basicSalary", basicSalary);
+        jsonObj.put("department", department);
     }
 }
