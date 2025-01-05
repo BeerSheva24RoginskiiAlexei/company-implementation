@@ -2,25 +2,24 @@ package telran.employees.db.jpa;
 
 import org.json.JSONObject;
 
-import jakarta.persistence.Entity;
-import telran.employees.Employee;
-import telran.employees.Manager;
+import jakarta.persistence.*;
+import telran.employees.*;
 
 @Entity
+@DiscriminatorValue("Manager")
 public class ManagerEntity extends EmployeeEntity {
     private float factor;
 
     @Override
-    public void fromDto(Employee dto) {
-        super.fromDto(dto);
-        if (dto instanceof Manager) {
-            this.factor = ((Manager) dto).getFactor();
-        }
+    protected void fromEmployeeDto(Employee empl) {
+        super.fromEmployeeDto(empl);
+        factor = ((Manager) empl).getFactor();
     }
 
     @Override
-    public void toJson(JSONObject json) {
-        super.toJson(json);
-        json.put("factor", factor);
+    protected void toJsonObject(JSONObject jsonObj) {
+        super.toJsonObject(jsonObj);
+        jsonObj.put("factor", factor);
     }
+
 }

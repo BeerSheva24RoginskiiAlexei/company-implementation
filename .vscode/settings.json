@@ -1,3 +1,9 @@
 {
-  "java.configuration.updateBuildConfiguration": "interactive"
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.test.config": {
+    "env":{
+      "POSTGRES_HOST": "54.209.24.218",
+      "POSTGRES_PASSWORD": "12345.com",
+    }
+  }
 }

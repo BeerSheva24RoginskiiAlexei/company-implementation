@@ -2,28 +2,28 @@ package telran.employees.db.jpa;
 
 import org.json.JSONObject;
 
-import jakarta.persistence.Entity;
-import telran.employees.Employee;
-import telran.employees.WageEmployee;
+import jakarta.persistence.*;
+import telran.employees.*;
 
 @Entity
+@DiscriminatorValue("WageEmployee")
 public class WageEmployeeEntity extends EmployeeEntity {
-    private int wage;
-    private int hours;
+    int wage;
+    int hours;
 
     @Override
-    public void fromDto(Employee dto) {
-        super.fromDto(dto);
-        if (dto instanceof WageEmployee) {
-            this.wage = ((WageEmployee) dto).getWage();
-            this.hours = ((WageEmployee) dto).getHours();
-        }
+    protected void fromEmployeeDto(Employee empl) {
+        super.fromEmployeeDto(empl);
+        wage = ((WageEmployee) empl).getWage();
+        hours = ((WageEmployee) empl).getHours();
     }
 
     @Override
-    public void toJson(JSONObject json) {
-        super.toJson(json);
-        json.put("wage", wage);
-        json.put("hours", hours);
+    protected void toJsonObject(JSONObject jsonObj) {
+        super.toJsonObject(jsonObj);
+        jsonObj.put("wage", wage);
+        jsonObj.put("hours", hours);
+
     }
+
 }
